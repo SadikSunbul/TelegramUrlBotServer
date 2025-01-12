@@ -20,6 +20,7 @@ func Root() {
 		ctx.SendString("Telegram Url Bot Server active")
 		return nil
 	})
+	app.Get("/ip", urlHandlers.IP)
 
 	log.Fatal(app.Listen(cfg.LolalHostPort))
 }

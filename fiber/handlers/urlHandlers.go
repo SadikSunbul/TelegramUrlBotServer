@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/SadikSunbul/TelegramUrlBotServer/Models"
@@ -83,3 +84,46 @@ func getCountryFromIP(ip string) string {
 	}
 	return result.Country
 }
+
+func (db *UrlHandlers) IP(ctx *fiber.Ctx) error {
+	// Gerçek IP adresini al
+	clientIP := ctx.Get("X-Forwarded-For")
+	if clientIP == "" {
+		clientIP = ctx.Get("X-Real-IP")
+		if clientIP == "" {
+			clientIP = ctx.IP()
+		}
+	}
+
+	// Kullanıcının cihaz bilgilerini al
+	userAgent := ctx.Get("User-Agent")
+	device := getDeviceFromUserAgent(userAgent)
+
+	// IP ve cihaz bilgilerini döndür
+	response := fmt.Sprintf("IP Adresi: %s, Cihaz: %s", clientIP, device)
+	ctx.SendString(response)
+	return nil
+}
+
+// User-Agent'a göre cihazı belirle
+func getDeviceFromUserAgent(userAgent string) string {
+	if contains(userAgent, "Windows") {
+		return "Windows"
+	} else if contains(userAgent, "Macintosh") {
+		return "Mac"
+	} else if contains(userAgent, "iPhone") || contains(userAgent, "iPad") {
+		return "iOS"
+	} else if contains(userAgent, "Android") {
+		return "Android"
+	}
+	return "Bilinmiyor"
+}
+
+// String içinde bir alt dizeyi kontrol et
+func contains(s, substr string) bool {
+	return strings.Contains(s, substr)
+}
+
+/*
+kullanıcın hangı ipv4 den ıstek attıgını bulur snra hangi cihazdan mac mı vındows mu ios mu yoksa androitmi oldugunu bulur sonra bulabildiği tüm verileri bulru ve kullanıcıya döner
+*/

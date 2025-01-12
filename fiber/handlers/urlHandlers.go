@@ -14,50 +14,6 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-type IpApiResponse struct {
-	Country string `json:"country"`
-	Status  string `json:"status"`
-}
-
-type IpApiDetailResponse struct {
-	Status      string  `json:"status"`
-	Country     string  `json:"country"`
-	CountryCode string  `json:"countryCode"`
-	Region      string  `json:"region"`
-	RegionName  string  `json:"regionName"`
-	City        string  `json:"city"`
-	Zip         string  `json:"zip"`
-	Lat         float64 `json:"lat"`
-	Lon         float64 `json:"lon"`
-	Timezone    string  `json:"timezone"`
-	ISP         string  `json:"isp"`
-	Org         string  `json:"org"`
-	AS          string  `json:"as"`
-	Query       string  `json:"query"`
-}
-
-type UserDeviceInfo struct {
-	IP           string   `json:"ip"`
-	Device       string   `json:"device"`
-	Browser      string   `json:"browser"`
-	OS           string   `json:"os"`
-	UserAgent    string   `json:"user_agent"`
-	Country      string   `json:"country"`
-	CountryCode  string   `json:"country_code"`
-	Region       string   `json:"region"`
-	City         string   `json:"city"`
-	ISP          string   `json:"isp"`
-	Organization string   `json:"organization"`
-	ASN          string   `json:"asn"`
-	Timezone     string   `json:"timezone"`
-	Location     Location `json:"location"`
-}
-
-type Location struct {
-	Latitude  float64 `json:"latitude"`
-	Longitude float64 `json:"longitude"`
-}
-
 func (db *UrlHandlers) Forward(ctx *fiber.Ctx) error {
 	url := ctx.Params("url")
 	data, err := db.DB.GetBy(Database.Url, bson.D{{"shortUrl", url}})
@@ -85,47 +41,13 @@ func (db *UrlHandlers) Forward(ctx *fiber.Ctx) error {
 		return err
 	}
 
-	var urlinfo Models.UrlInfo
+	DatabaseRecord(ctx, db, get_url.Id)
 
-	urlinfo.UrlId = get_url.Id
-	urlinfo.ClickTime = primitive.NewDateTimeFromTime(time.Now())
-
-	clientIP := ctx.IP()
-	country := getCountryFromIP(clientIP)
-	urlinfo.Country = country
-
-	_, err = db.DB.Add(Database.UrlIfo, urlinfo)
-	if err != nil {
-		return err
-	}
 	return nil
 }
 
-func getCountryFromIP(ip string) string {
-	resp, err := http.Get(fmt.Sprintf("http://ip-api.com/json/%s?fields=status,country", ip))
-	if err != nil {
-		return "Unknown"
-	}
-	fmt.Print("ip:", ip)
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return "Unknown"
-	}
-
-	var result IpApiResponse
-	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		return "Unknown"
-	}
-
-	if result.Status != "success" {
-		return "Unknown"
-	}
-	return result.Country
-}
-
-func (db *UrlHandlers) Test(ctx *fiber.Ctx) error {
-	userInfo := UserDeviceInfo{}
+func DatabaseRecord(ctx *fiber.Ctx, db *UrlHandlers, urlId primitive.ObjectID) error {
+	userInfo := Models.UserDeviceInfo{}
 
 	// IP adresini al
 	userInfo.IP = ctx.Get("X-Real-IP")
@@ -148,8 +70,6 @@ func (db *UrlHandlers) Test(ctx *fiber.Ctx) error {
 			}
 		}
 	}
-
-	fmt.Printf("Tespit edilen IP: %s\n", userInfo.IP)
 
 	// User-Agent bilgilerini al
 	userAgent := ctx.Get("User-Agent")
@@ -214,9 +134,9 @@ func (db *UrlHandlers) Test(ctx *fiber.Ctx) error {
 	resp, err := http.Get(fmt.Sprintf("http://ip-api.com/json/%s?fields=status,country,countryCode,region,regionName,city,district,zip,lat,lon,timezone,isp,org,as,query", userInfo.IP))
 	if err == nil {
 		defer resp.Body.Close()
-		var ipDetails IpApiDetailResponse
+		var ipDetails Models.IpApiDetailResponse
 		if err := json.NewDecoder(resp.Body).Decode(&ipDetails); err == nil && ipDetails.Status == "success" {
-			fmt.Printf("IP API Yanıtı: %+v\n", ipDetails)
+
 			userInfo.Country = ipDetails.Country
 			userInfo.CountryCode = ipDetails.CountryCode
 			userInfo.Region = ipDetails.RegionName
@@ -225,7 +145,7 @@ func (db *UrlHandlers) Test(ctx *fiber.Ctx) error {
 			userInfo.Organization = ipDetails.Org
 			userInfo.ASN = ipDetails.AS
 			userInfo.Timezone = ipDetails.Timezone
-			userInfo.Location = Location{
+			userInfo.Location = Models.Location{
 				Latitude:  ipDetails.Lat,
 				Longitude: ipDetails.Lon,
 			}
@@ -240,8 +160,11 @@ func (db *UrlHandlers) Test(ctx *fiber.Ctx) error {
 		userInfo.City = "Bilinmiyor"
 	}
 
-	return ctx.JSON(fiber.Map{
-		"status": "success",
-		"data":   userInfo,
-	})
+	userInfo.UrlId = urlId
+	userInfo.ClickTime = primitive.NewDateTimeFromTime(time.Now())
+
+	db.DB.Add(Database.UrlIfo, userInfo)
+
+	return nil
+
 }

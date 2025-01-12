@@ -20,8 +20,6 @@ func Root() {
 		ctx.SendString("Telegram Url Bot Server active")
 		return nil
 	})
-	app.Get("/test", urlHandlers.Test)
-
 	// En son wildcard route
 	app.Get("/:url", urlHandlers.Forward)
 

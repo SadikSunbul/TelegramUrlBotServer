@@ -15,11 +15,13 @@ func Root() {
 
 	urlHandlers := handlers.CreateUrlHandler()
 
-	app.Get("/:url", urlHandlers.Forward)
+	// Önce sabit route'lar
 	app.Get("/", func(ctx *fiber.Ctx) error {
 		ctx.SendString("Telegram Url Bot Server active")
 		return nil
 	})
+	// En son wildcard route
+	app.Get("/:url", urlHandlers.Forward)
 
 	log.Fatal(app.Listen(cfg.LolalHostPort))
 }

@@ -2,8 +2,8 @@ package Database
 
 import (
 	"context"
+	"github.com/SadikSunbul/TelegramUrlBotServer/config"
 
-	"github.com/SadikSunbul/TelegramUrlBot/config"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -18,11 +18,11 @@ const (
 )
 
 func ConnectionDatabase() *DataBase {
-	config := config.GetConfig()
+	cfg := config.GetConfig()
 	client, err := mongo.Connect(context.TODO(), options.Client().
-		ApplyURI(config.MongoDbConnect))
+		ApplyURI(cfg.MongoDbConnect))
 	if err != nil {
 		panic(err)
 	}
-	return &DataBase{Client: client.Database(config.DbName)}
+	return &DataBase{Client: client.Database(cfg.DbName)}
 }

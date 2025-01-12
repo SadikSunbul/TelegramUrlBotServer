@@ -1,2 +1,3 @@
 mongoDbConnect: "mongodb://admin:password@localhost:27017"
 dbName: "telegram"
+lolalHostPort : ":3000"

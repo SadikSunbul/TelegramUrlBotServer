@@ -1,0 +1,2 @@
+mongoDbConnect: "mongodb://admin:password@localhost:27017"
+dbName: "telegram"

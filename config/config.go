@@ -18,6 +18,7 @@ const (
 type Schema struct {
 	MongoDbConnect string `env:"mongoDbConnect"`
 	DbName         string `env:"dbName"`
+	LolalHostPort  string `env:"lolalHostPort"`
 }
 
 var (

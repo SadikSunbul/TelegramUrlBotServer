@@ -1,3 +1,3 @@
-mongoDbConnect: "mongodb+srv://telegrambottest:BvHjlxGLb01UP5wT@test1.0lulr.mongodb.net/test?retryWrites=true&w=majority"
+mongoDbConnect: "mongodb://admin:password@localhost:27017"
 dbName: "telegram"
 lolalHostPort : ":3000"
